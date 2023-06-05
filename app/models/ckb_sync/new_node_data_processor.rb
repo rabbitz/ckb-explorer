@@ -61,6 +61,7 @@ module CkbSync
         # build node data
         local_block = @local_block = build_block!(node_block)
         local_cache.write("BlockNumber", local_block.number)
+        # 创建叔块信息
         build_uncle_blocks!(node_block, local_block.id)
         inputs = @inputs = {}
         outputs = @outputs = {}
@@ -146,6 +147,7 @@ module CkbSync
         contained_address_ids[tx_index] = Set.new
         tx_index += 1
       end
+      # ckb_txs 按照  id 从小到大进行排序
       ckb_txs.sort! { |tx1, tx2| tx1["id"] <=> tx2["id"] }
     end
 
@@ -724,7 +726,19 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
         lock_script_ids.each do |lock_script_id|
           lock_script = LockScript.find lock_script_id
 
+          # script 的 code_hash 可能和 contract 的 code_hash 一样，但是 script 的 args 可能不一样
           contract = Contract.find_by code_hash: lock_script.code_hash
+
+          # script 是 lock 的 compute_hash
+          # TODO: 这里为啥要用 script_hash 而不是用 code_hash？？
+          # 因为 code_hash 可能一样，但是 args 不一样，这样就会导致同一个 contract 会有多个 script
+          # 而 script_hash 是根据 code_hash 和 args 计算出来的，所以是唯一的
+          # 但是这里有个问题，就是如果同一个 contract 有多个 args，那么就会有多个 script
+          # 但是这个问题不大，因为这里的 script 是 lock 的 script，而 lock 的 script 一般都是固定的
+          # 也就是说，同一个 contract 的 args 一般都是一样的，所以这里的 script 一般都是一样的
+          # 但是这里还是有个问题，就是如果同一个 contract 的 args 不一样，那么就会有多个 script
+          # 但是这个问题也不大，因为这里的 script 是 lock 的 script，而 lock 的 script 一般都是固定的
+          # 也就是说，同一个 contract 的 args 一般都是一样的，所以这里的 script 一般都是一样的
 
           temp_hash = { script_hash: lock_script&.script_hash, is_contract: false }
           if contract
@@ -733,6 +747,7 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
             contract = Contract.create code_hash: lock_script.script_hash
             temp_hash = temp_hash.merge contract_id: contract.id
           end
+          # TODO: 这里为什么要加  script 和  lock_script 的关联？
           script = Script.create_or_find_by temp_hash
           lock_script.update script_id: script.id
         end
@@ -1099,6 +1114,8 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
     end
 
     def build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data)
+      # https://docs.ckb.dev/docs/rfcs/0014-vm-cycle-limits/0014-vm-cycle-limits.zh cycle 的定义
+      # TODO:...yo有
       cycles = CkbSync::Api.instance.get_block_cycles node_block.header.hash
       txs = nil
       ckb_transactions_attributes = []
@@ -1109,6 +1126,7 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
       node_block.transactions.each do |tx|
         attrs = ckb_transaction_attributes(local_block, tx, tx_index)
         if cycles
+          # 将对应的  cycle  值从十六进制转成响应的整数值
           attrs[:cycles] = tx_index > 0 ? cycles[tx_index - 1]&.hex : nil
         end
         header_deps[tx.hash] = tx.header_deps
@@ -1123,6 +1141,8 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
 
         tx_index += 1
       end
+      # TODO: 这里为什么要先更新，如果记录没有岂不是找不到数据？？？
+      #
       # First update status thus we can use upsert later. otherwise, we may not be able to
       # locate correct record according to tx_hash
       CkbTransaction.where(tx_hash: hashes).update_all tx_status: "committed"
@@ -1189,6 +1209,7 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
         transaction_fee: 0,
         # witnesses: tx.witnesses,
         is_cellbase: tx_index.zero?,
+        # 可正 负 nil
         live_cell_changes: live_cell_changes(tx, tx_index),
         bytes: tx.serialized_size_in_block
       }
@@ -1223,32 +1244,54 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
 
       self.class.trace_execution_scoped(["ckb_sync/new_node_data_processor/build_block"]) do
         header = node_block.header
+        # TODO:..
         epoch_info = CkbUtils.parse_epoch_info(header)
         cellbase = node_block.transactions.first
 
+        # 在  cellbase  transaction witnesses 不为空的情况. 创建 cellbase 对应的 lock_script 和  address
         generate_address_in_advance(cellbase, header.timestamp)
+        # transactions 中总消耗的  capacity, 单位 shannon
         block_cell_consumed = CkbUtils.block_cell_consumed(node_block.transactions)
+        # transactions 中总产生的  capacity, 单位 shannon
         total_cell_capacity = CkbUtils.total_cell_capacity(node_block.transactions)
+        # 获取 cellbase 对应的  ckb address 地址，矿工的  ckb 地址
         miner_hash = CkbUtils.miner_hash(cellbase)
         miner_lock_hash = CkbUtils.miner_lock_hash(cellbase)
+        # TODO:...
         base_reward = CkbUtils.base_reward(header.number, epoch_info.number)
         block = Block.find_or_create_by!(
+          # 以压缩的格式表示的 PoW 解谜（挖矿）难度
           compact_target: header.compact_target,
+          # 当前区块 hash
           block_hash: header.hash,
+          # 当前区块高度
           number: header.number,
+          # 上一个区块的 hash
           parent_hash: header.parent_hash,
+          # 随机数。 类似于比特币中的随机数， 表示 PoW 谜题的解
           nonce: header.nonce,
+          # 时间戳
           timestamp: header.timestamp,
+          # 串联的转账哈希的 CBMT 根和转账 witness 哈希的 CBMT 根的哈希
           transactions_root: header.transactions_root,
+          # 串联的提案 ids 的哈希。 (当没有提案时所有数字为 0)
           proposals_hash: header.proposals_hash,
+          # 叔块数量
           uncles_count: node_block.uncles.count,
+          # TODO:...
           extra_hash: header.try(:uncles_hash).presence || header.try(:extra_hash),
+          # 叔区块中 header  里  hash 的集合
           uncle_block_hashes: uncle_block_hashes(node_block.uncles),
+          # 定义为当前转账的版本。 当区块链系统发生分叉时，用它来区分转账（发生在哪一条链上）。
           version: header.version,
+          # 一个由提案转账进行十六进制编码后的短转账 ID 组成的数组
           proposals: node_block.proposals,
           proposals_count: node_block.proposals.count,
+          # transactions 中总消耗的  capacity, 单位 shannon
           cell_consumed: block_cell_consumed,
+          # transactions 中总产生的  capacity, 单位 shannon
           total_cell_capacity: total_cell_capacity,
+          # 获取 cellbase 对应的  ckb address 地址，矿工的  ckb 地址
           miner_hash: miner_hash,
           miner_lock_hash: miner_lock_hash,
           reward: base_reward,
@@ -1259,11 +1302,16 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
           epoch: epoch_info.number,
           start_number: epoch_info.start_number,
           length: epoch_info.length,
+          # 包含 DAO 相关的信息。 详情参阅 Nervos DAO RFC。
           dao: header.dao,
+          # 两个区块之间的时间间隔
           block_time: block_time(header.timestamp, header.number),
           block_size: 0,
+          # 矿工信息
           miner_message: CkbUtils.miner_message(cellbase),
+          # TODO:...
           extension: node_block.extension,
+          # 前 37 个区块的中值时间戳
           median_timestamp: get_median_timestamp(header.hash)
         )
       end
