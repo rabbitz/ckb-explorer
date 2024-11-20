@@ -33,7 +33,7 @@ namespace :migration do
           end
         end
       end; nil
-      CellDependency.upsert_all(attrs, unique_by: %i[ckb_transaction_id contract_cell_id], update_only: %i[block_number tx_index]) if attrs.present?
+      CellDependency.upsert_all(attrs, unique_by: %i[ckb_transaction_id contract_cell_id dep_type], update_only: %i[block_number tx_index]) if attrs.present?
     end; nil
   rescue StandardError => _e
     retry_count += 1
