@@ -123,7 +123,7 @@ class CellDependency < ApplicationRecord
       end
     end
     CellDependency.upsert_all(cell_dependencies_attrs,
-                              unique_by: %i[ckb_transaction_id contract_cell_id], update_only: %i[block_number tx_index])
+                              unique_by: %i[ckb_transaction_id contract_cell_id dep_type], update_only: %i[block_number tx_index])
     CellDepsOutPoint.upsert_all(cell_deps_out_points_attrs,
                                 unique_by: %i[contract_cell_id deployed_cell_output_id])
     Contract.upsert_all(contract_attrs, unique_by: %i[deployed_cell_output_id], update_only: %i[is_lock_script is_type_script])
@@ -146,7 +146,7 @@ end
 #
 # Indexes
 #
-#  cell_deps_tx_cell_idx                                 (ckb_transaction_id,contract_cell_id) UNIQUE
-#  index_cell_dependencies_on_block_number_and_tx_index  (block_number,tx_index)
-#  index_cell_dependencies_on_contract_cell_id           (contract_cell_id)
+#  index_cell_dependencies_on_block_number_and_tx_index       (block_number,tx_index)
+#  index_cell_dependencies_on_contract_cell_id                (contract_cell_id)
+#  index_cell_dependencies_on_tx_id_and_cell_id_and_dep_type  (ckb_transaction_id,contract_cell_id,dep_type) UNIQUE
 #
