@@ -3938,13 +3938,6 @@ CREATE UNIQUE INDEX block_tx_index ON public.block_transactions USING btree (blo
 
 
 --
--- Name: cell_deps_tx_cell_idx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX cell_deps_tx_cell_idx ON public.cell_dependencies USING btree (ckb_transaction_id, contract_cell_id);
-
-
---
 -- Name: index_cell_outputs_on_address_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4677,6 +4670,13 @@ CREATE INDEX index_cell_dependencies_on_block_number_and_tx_index ON public.cell
 --
 
 CREATE INDEX index_cell_dependencies_on_contract_cell_id ON public.cell_dependencies USING btree (contract_cell_id);
+
+
+--
+-- Name: index_cell_dependencies_on_tx_id_and_cell_id_and_dep_type; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_cell_dependencies_on_tx_id_and_cell_id_and_dep_type ON public.cell_dependencies USING btree (ckb_transaction_id, contract_cell_id, dep_type);
 
 
 --
@@ -6012,6 +6012,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20241105070340'),
 ('20241105070619'),
 ('20241106062022'),
-('20241114074433');
+('20241114074433'),
+('20241119014652');
 
 
