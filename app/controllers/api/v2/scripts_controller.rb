@@ -17,14 +17,12 @@ module Api
         head :not_found and return if @contracts.blank?
 
         contract_ids = @contracts.map { |contract| contract.id }
-
-        base_query = CkbTransaction.joins(cell_dependencies: { cell_deps_out_point: :contract }).
-          where(contracts: { id: contract_ids }).
+        contract_cell_ids = CellDepsOutPoint.list_contract_cell_ids_by_contract(contract_ids)
+        base_query = CkbTransaction.joins(:cell_dependencies).
+          where(cell_dependencies: { contract_cell_id: contract_cell_ids }).
           order("cell_dependencies.block_number DESC, cell_dependencies.tx_index DESC").
-          select("ckb_transactions.*, cell_dependencies.block_number, cell_dependencies.tx_index").
           limit(10000)
-
-        CkbTransaction.from("(#{base_query.to_sql}) AS limited_transactions").
+        CkbTransaction.from("(#{base_query.to_sql}) AS ckb_transactions").
           order("block_number DESC, tx_index DESC").
           page(@page).
           per(@page_size)
@@ -83,7 +81,7 @@ module Api
           when "data", "data1", "data2"
             Contract.where(data_hash: params[:code_hash])
           when "type"
-            Contract.find_by(type_hash: params[:code_hash])
+            Contract.where(type_hash: params[:code_hash])
           end
       end
 
