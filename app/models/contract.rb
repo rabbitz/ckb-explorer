@@ -8,10 +8,10 @@ class Contract < ApplicationRecord
   def self.query_script_ids(contracts)
     lock_script_ids = []
     type_script_ids = []
-    contracts.each do |_contract|
-      if is_lock_script
+    contracts.each do |contract|
+      if contract.is_lock_script
         lock_script_ids << LockScript.where(code_hash: [type_hash, data_hash]).pluck(:id)
-      elsif is_type_script
+      elsif contract.is_type_script
         type_script_ids << TypeScript.where(code_hash: [type_hash, data_hash]).pluck(:id)
       end
     end
