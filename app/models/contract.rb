@@ -9,10 +9,11 @@ class Contract < ApplicationRecord
     lock_script_ids = []
     type_script_ids = []
     contracts.each do |contract|
+      binary_hashes = CkbUtils.hexes_to_bins_sql([contract.type_hash, contract.data_hash].compact)
       if contract.is_lock_script
-        lock_script_ids << LockScript.where(code_hash: [contract.type_hash, contract.data_hash]).pluck(:id)
+        lock_script_ids << LockScript.where("code_hash IN (#{binary_hashes})").pluck(:id)
       elsif contract.is_type_script
-        type_script_ids << TypeScript.where(code_hash: [contract.type_hash, contract.data_hash]).pluck(:id)
+        type_script_ids << TypeScript.where("code_hash IN (#{binary_hashes})").pluck(:id)
       end
     end
     { lock_script: lock_script_ids.flatten.uniq, type_script: type_script_ids.flatten.uniq }
