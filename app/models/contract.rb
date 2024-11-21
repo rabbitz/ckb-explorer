@@ -10,9 +10,9 @@ class Contract < ApplicationRecord
     type_script_ids = []
     contracts.each do |contract|
       if contract.is_lock_script
-        lock_script_ids << LockScript.where(code_hash: [type_hash, data_hash]).pluck(:id)
+        lock_script_ids << LockScript.where(code_hash: [contract.type_hash, contract.data_hash]).pluck(:id)
       elsif contract.is_type_script
-        type_script_ids << TypeScript.where(code_hash: [type_hash, data_hash]).pluck(:id)
+        type_script_ids << TypeScript.where(code_hash: [contract.type_hash, contract.data_hash]).pluck(:id)
       end
     end
     { lock_script: lock_script_ids.flatten.uniq, type_script: type_script_ids.flatten.uniq }
