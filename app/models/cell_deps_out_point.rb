@@ -1,6 +1,8 @@
 class CellDepsOutPoint < ApplicationRecord
   belongs_to :contract, foreign_key: :deployed_cell_output_id, primary_key: :deployed_cell_output_id
   has_many :cell_dependencies, foreign_key: :contract_cell_id, primary_key: :contract_cell_id
+
+  scope :list_contract_cell_ids_by_contract, ->(contract_ids) { joins(:contract).where(contracts: { id: contract_ids }).pluck(:contract_cell_id) }
 end
 
 # == Schema Information
