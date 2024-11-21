@@ -16,13 +16,18 @@ module Api
       def ckb_transactions
         head :not_found and return if @contracts.blank?
 
-        # expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
-        @ckb_transaction_ids = @contracts.joins(cell_deps_out_points: :cell_dependency).
-          order("cell_dependencies.block_number DESC, cell_dependencies.tx_index ASC").
-          pluck("cell_dependencies.ckb_transaction_id").
+        contract_ids = @contracts.map { |contract| contract.id }
+
+        base_query = CkbTransaction.joins(cell_dependencies: { cell_deps_out_point: :contract }).
+          where(contracts: { id: contract_ids }).
+          order("cell_dependencies.block_number DESC, cell_dependencies.tx_index DESC").
+          select("ckb_transactions.*, cell_dependencies.block_number, cell_dependencies.tx_index").
+          limit(10000)
+
+        CkbTransaction.from("(#{base_query.to_sql}) AS limited_transactions").
+          order("block_number DESC, tx_index DESC").
           page(@page).
           per(@page_size)
-        CkbTransaction.where(id: @ckb_transaction_ids).order("block_number DESC, tx_index ASC")
       end
 
       def deployed_cells
