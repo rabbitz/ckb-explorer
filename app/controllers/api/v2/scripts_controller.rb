@@ -22,7 +22,7 @@ module Api
           where(cell_dependencies: { contract_cell_id: contract_cell_ids }).
           order("cell_dependencies.block_number DESC, cell_dependencies.tx_index DESC").
           limit(10000)
-        CkbTransaction.from("(#{base_query.to_sql}) AS ckb_transactions").
+        @ckb_transactions = CkbTransaction.from("(#{base_query.to_sql}) AS ckb_transactions").
           order("block_number DESC, tx_index DESC").
           page(@page).
           per(@page_size)
@@ -33,7 +33,7 @@ module Api
 
         # expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
 
-        CellOutput.live.where(id: @contracts.map(&:deployed_cell_output_id)).page(@page).per(@page_size)
+        @deployed_cells = CellOutput.live.where(id: @contracts.map(&:deployed_cell_output_id)).page(@page).per(@page_size)
       end
 
       def referring_cells
