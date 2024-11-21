@@ -1,6 +1,6 @@
 class CellDepsOutPoint < ApplicationRecord
-  belongs_to :cell_dependency, foreign_key: :contract_cell_id, primary_key: :contract_cell_id
   belongs_to :contract, foreign_key: :deployed_cell_output_id, primary_key: :deployed_cell_output_id
+  has_many :cell_dependencies, foreign_key: :contract_cell_id, primary_key: :contract_cell_id
 end
 
 # == Schema Information

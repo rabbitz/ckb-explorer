@@ -2,7 +2,7 @@
 class CellDependency < ApplicationRecord
   belongs_to :ckb_transaction
   belongs_to :cell_output, foreign_key: "contract_cell_id", class_name: "CellOutput"
-  has_many :cell_deps_out_points, foreign_key: :contract_cell_id, primary_key: :contract_cell_id
+  belongs_to :cell_deps_out_point, foreign_key: :contract_cell_id, primary_key: :contract_cell_id
 
   enum :dep_type, %i[code dep_group]
 
@@ -147,6 +147,6 @@ end
 # Indexes
 #
 #  index_cell_dependencies_on_block_number_and_tx_index       (block_number,tx_index)
-#  index_cell_dependencies_on_contract_cell_id                (contract_cell_id)
 #  index_cell_dependencies_on_tx_id_and_cell_id_and_dep_type  (ckb_transaction_id,contract_cell_id,dep_type) UNIQUE
+#  index_on_cell_dependencies_contract_cell_block_tx          (contract_cell_id,block_number DESC,tx_index DESC)
 #

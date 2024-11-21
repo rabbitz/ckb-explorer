@@ -5020,13 +5020,6 @@ CREATE INDEX index_cell_dependencies_on_block_number_and_tx_index ON public.cell
 
 
 --
--- Name: index_cell_dependencies_on_contract_cell_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_cell_dependencies_on_contract_cell_id ON public.cell_dependencies USING btree (contract_cell_id);
-
-
---
 -- Name: index_cell_dependencies_on_tx_id_and_cell_id_and_dep_type; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -5283,6 +5276,13 @@ CREATE UNIQUE INDEX index_nrc_factory_cells_on_code_hash_and_hash_type_and_args 
 --
 
 CREATE UNIQUE INDEX index_omiga_inscription_infos_on_udt_hash ON public.omiga_inscription_infos USING btree (udt_hash);
+
+
+--
+-- Name: index_on_cell_dependencies_contract_cell_block_tx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_on_cell_dependencies_contract_cell_block_tx ON public.cell_dependencies USING btree (contract_cell_id, block_number DESC, tx_index DESC);
 
 
 --
@@ -6426,6 +6426,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20241105070619'),
 ('20241106062022'),
 ('20241114074433'),
-('20241119014652');
+('20241119014652'),
+('20241121073245');
 
 
