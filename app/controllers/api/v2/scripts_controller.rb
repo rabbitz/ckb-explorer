@@ -17,7 +17,7 @@ module Api
         head :not_found and return if @contracts.blank?
 
         # expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
-        @ckb_transaction_ids = @contracts.joins(cell_deps_point_outputs: :cell_dependency).
+        @ckb_transaction_ids = @contracts.joins(cell_deps_out_points: :cell_dependency).
           order("cell_dependencies.block_number DESC, cell_dependencies.tx_index ASC").
           pluck("cell_dependencies.ckb_transaction_id").
           page(@page).
