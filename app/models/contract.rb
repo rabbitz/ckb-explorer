@@ -1,7 +1,5 @@
 class Contract < ApplicationRecord
-  has_many :referring_cells
-  has_many :referring_cell_outputs, through: :referring_cells, source: :cell_output
-  has_many :cell_deps_out_points, foreign_key: :deployed_cell_id, primary_key: :deployed_cell_id
+  has_many :cell_deps_out_points, foreign_key: :deployed_cell_output_id, primary_key: :deployed_cell_output_id
   has_many :cell_dependencies, through: :cell_deps_out_points
   has_one :deployed_cell_output, foreign_key: :deployed_cell_output_id
 
