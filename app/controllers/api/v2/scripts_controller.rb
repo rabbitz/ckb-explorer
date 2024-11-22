@@ -42,7 +42,9 @@ module Api
         # expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
 
         script_ids = Contract.query_script_ids(@contracts)
-        scope = CellOutput.live.by_scripts(script_ids[:lock_script], script_ids[:type_script])
+        scope = CellOutput.live.by_scripts(script_ids[:lock_script], script_ids[:type_script]).
+          order("block_timestamp DESC, cell_index DESC").
+          limit(10000)
         if params[:args].present?
           type_script = TypeScript.find_by(args: params[:args])
           scope = scope.or(CellOutput.where(type_script_id: type_script.id))
@@ -52,22 +54,37 @@ module Api
           scope = scope.where(address_id: address.map(&:id))
         end
 
-        @referring_cells = sort_referring_cells(scope).page(@page).per(@page_size)
+        @referring_cells =
+          CellOutput.live.from("(#{scope.to_sql}) AS cell_outputs").
+            order("block_timestamp DESC, cell_index DESC").
+            page(@page).
+            per(@page_size)
       end
 
       private
 
       def get_script_content
-        @contracts.map do |contract|
-          {
-            type_hash: contract.type_hash,
-            data_hash: contract.data_hash,
-            is_lock_script: contract.is_lock_script,
-            is_type_script: contract.is_type_script,
-            # capacity_of_deployed_cells: contract.total_deployed_cells_capacity,
-            # capacity_of_referring_cells: contract.total_referring_cells_capacity,
-          }
-        end
+        sum_hash =
+          @contracts.inject({
+                              capacity_of_deployed_cells: 0,
+                              capacity_of_referring_cells: 0,
+                              count_of_transactions: 0,
+                              count_of_deployed_cells: 0,
+                              count_of_referring_cells: 0,
+                            }) do |sum, contract|
+            sum[:capacity_of_deployed_cells] += contract.total_deployed_cells_capacity
+            sum[:capacity_of_referring_cells] += contract.total_referring_cells_capacity
+            sum[:count_of_transactions] += contract.ckb_transactions_count
+            sum[:count_of_deployed_cells] += count_of_deployed_cells
+            sum[:count_of_referring_cells] += contract.referring_cells_count
+            sum
+          end
+        {
+          id: @contracts.first.type_hash,
+          code_hash: params[:code_hash],
+          hash_type: params[:hash_type],
+          script_type: contract.first.is_lock_script ? "LockScript" : "TypeScript",
+        }.merge(sum_hash)
       end
 
       def set_page_and_page_size
