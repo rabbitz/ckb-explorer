@@ -55,7 +55,7 @@ module Api
         end
 
         @referring_cells =
-          CellOutput.live.from("(#{scope.to_sql}) AS cell_outputs").
+          CellOutput.from("(#{scope.to_sql}) AS cell_outputs").
             order("block_timestamp DESC, cell_index DESC").
             page(@page).
             per(@page_size)
