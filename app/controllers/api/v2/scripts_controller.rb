@@ -75,7 +75,7 @@ module Api
             sum[:capacity_of_deployed_cells] += contract.total_deployed_cells_capacity
             sum[:capacity_of_referring_cells] += contract.total_referring_cells_capacity
             sum[:count_of_transactions] += contract.ckb_transactions_count
-            sum[:count_of_deployed_cells] += count_of_deployed_cells
+            sum[:count_of_deployed_cells] += contract.count_of_deployed_cells
             sum[:count_of_referring_cells] += contract.referring_cells_count
             sum
           end
