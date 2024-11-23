@@ -6,11 +6,11 @@ namespace :migration do
       batch.each do |missed_cell_dep|
         CellDependency.where(contract_cell_id: missed_cell_dep.contract_cell_id).select(:dep_type).distinct.each do |cell_dep|
           if cell_dep.dep_type == "code"
-            output = CellOutput.find(cell_dep.contract_cell_id)
+            output = CellOutput.find(missed_cell_dep.contract_cell_id)
             CellDepsOutPoint.find_or_create_by(tx_hash: output.tx_hash, cell_index: output.cell_index, deployed_cell_output_id: output.id, contract_cell_id: output.id)
           else
             cell_deps_out_points_attrs = []
-            mid_cell = CellOutput.find(cell_dep.contract_cell_id)
+            mid_cell = CellOutput.find(missed_cell_dep.contract_cell_id)
             binary_data = mid_cell.binary_data
             out_points_count = binary_data[0, 4].unpack("L<")
             0.upto(out_points_count[0] - 1) do |i|
@@ -27,7 +27,7 @@ namespace :migration do
             CellDepsOutPoint.upsert_all(cell_deps_out_points_attrs)
           end
         rescue StandardError => _e
-          error_ids << contract_cell_id
+          error_ids << missed_cell_dep.contract_cell_id
         end
       end
     end
