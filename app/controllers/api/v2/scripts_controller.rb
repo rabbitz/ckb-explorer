@@ -83,7 +83,7 @@ module Api
           id: @contracts.first.type_hash,
           code_hash: params[:code_hash],
           hash_type: params[:hash_type],
-          script_type: contract.first.is_lock_script ? "LockScript" : "TypeScript",
+          script_type: @contracts.first.is_lock_script ? "LockScript" : "TypeScript",
         }.merge(sum_hash)
       end
 
