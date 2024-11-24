@@ -1,6 +1,7 @@
 namespace :migration do
   desc "Usage: RAILS_ENV=production bundle exec rake migration:fill_cell_deps_out_point"
   task fill_cell_deps_out_point: :environment do
+    ActiveRecord::Base.connection.execute("SET statement_timeout = 0")
     error_ids = []
     CellDependency.left_joins(:cell_deps_out_point).where(cell_deps_out_point: { id: nil }).select(:contract_cell_id).distinct.in_batches do |batch|
       batch.each do |missed_cell_dep|
