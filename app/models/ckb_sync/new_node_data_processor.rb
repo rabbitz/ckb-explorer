@@ -92,7 +92,7 @@ module CkbSync
       async_update_udt_infos(local_block)
       flush_inputs_outputs_caches(local_block)
       generate_statistics_data(local_block)
-      generate_deployed_cells_and_referring_cells(local_block)
+      # generate_deployed_cells_and_referring_cells(local_block)
       detect_cota_infos(local_block)
       detect_token_transfer(token_transfer_ckb_tx_ids)
       detect_bitcoin_transactions(local_block)
@@ -1244,6 +1244,7 @@ _prev_outputs, index = nil)
       ckb_transactions_attributes = []
       hashes = []
       header_deps = {}
+      cell_deps = {}
       witnesses = {}
       node_block.transactions.each_with_index do |tx, tx_index|
         attrs = ckb_transaction_attributes(local_block, tx, tx_index)
@@ -1251,6 +1252,7 @@ _prev_outputs, index = nil)
           attrs[:cycles] = tx_index > 0 ? cycles[tx_index - 1]&.hex : nil
         end
         header_deps[tx.hash] = tx.header_deps
+        cell_deps[tx.hash] = tx.cell_deps
         witnesses[tx.hash] = tx.witnesses
         ckb_transactions_attributes << attrs
         hashes << tx.hash
@@ -1308,6 +1310,24 @@ _prev_outputs, index = nil)
       if header_deps_attrs.present?
         HeaderDependency.upsert_all(header_deps_attrs,
                                     unique_by: %i[ckb_transaction_id index])
+      end
+
+      cell_deps_attrs = []
+      cell_deps.each do |tx_hash, cell_deps|
+        txid = hash2id[tx_hash]
+
+        cell_deps.each do |cell_dep|
+          cell_deps_attrs <<
+            {
+              ckb_transaction_id: txid,
+              dep_type: cell_dep.dep_type,
+              contract_cell_id: CellOutput.find_by_pointer(cell_dep.out_point.tx_hash, cell_dep.out_point.index),
+            }
+        end
+      end
+      if cell_deps_attrs.present?
+        CellDependency.upsert_all(cell_deps_attrs,
+                                  unique_by: %i[ckb_transaction_id contract_cell_id dep_type])
       end
 
       # process witnesses
