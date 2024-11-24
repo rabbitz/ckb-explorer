@@ -1321,7 +1321,7 @@ _prev_outputs, index = nil)
             {
               ckb_transaction_id: txid,
               dep_type: cell_dep.dep_type,
-              contract_cell_id: CellOutput.find_by_pointer(cell_dep.out_point.tx_hash, cell_dep.out_point.index),
+              contract_cell_id: CellOutput.find_by_pointer(cell_dep.out_point.tx_hash, cell_dep.out_point.index).id,
             }
         end
       end
