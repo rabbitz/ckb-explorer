@@ -1246,6 +1246,7 @@ _prev_outputs, index = nil)
       header_deps = {}
       cell_deps = {}
       witnesses = {}
+      hash2index = {}
       node_block.transactions.each_with_index do |tx, tx_index|
         attrs = ckb_transaction_attributes(local_block, tx, tx_index)
         if cycles
@@ -1253,6 +1254,7 @@ _prev_outputs, index = nil)
         end
         header_deps[tx.hash] = tx.header_deps
         cell_deps[tx.hash] = tx.cell_deps
+        hash2index[tx.hash] = tx_index
         witnesses[tx.hash] = tx.witnesses
         ckb_transactions_attributes << attrs
         hashes << tx.hash
@@ -1315,6 +1317,7 @@ _prev_outputs, index = nil)
       cell_deps_attrs = []
       cell_deps.each do |tx_hash, cell_deps|
         txid = hash2id[tx_hash]
+        tx_index = hash2index[tx_hash]
 
         cell_deps.each do |cell_dep|
           cell_deps_attrs <<
@@ -1322,6 +1325,8 @@ _prev_outputs, index = nil)
               ckb_transaction_id: txid,
               dep_type: cell_dep.dep_type,
               contract_cell_id: CellOutput.find_by_pointer(cell_dep.out_point.tx_hash, cell_dep.out_point.index).id,
+              block_number: local_block.number,
+              tx_index:,
             }
         end
       end
