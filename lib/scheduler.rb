@@ -132,4 +132,8 @@ s.every "5m", overlap: false do
   call_worker FiberGraphDetectWorker
 end
 
+s.every "10s", overlap: false do
+  call_worker AnalyzeContractFromCellDependencyWorker
+end
+
 s.join

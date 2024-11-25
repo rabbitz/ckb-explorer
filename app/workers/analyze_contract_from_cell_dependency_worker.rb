@@ -2,13 +2,17 @@ class AnalyzeContractFromCellDependencyWorker
   include Sidekiq::Worker
 
   def perform
-    CellDependency.where(contract_analyzed: false).limit(100).each do |cell_dep|
+    cell_deps_out_points_attrs = Set.new
+    contract_attrs = Set.new
+    cell_deps_attrs = []
+
+    CellDependency.where(contract_analyzed: false).limit(1000).each do |cell_dep|
+      cell_deps_attrs << { contract_analyzed: true, ckb_transaction_id: cell_dep.ckb_transaction_id, contract_cell_id: cell_dep.contract_cell_id, dep_type: cell_dep.dep_type }
+
       next if CellDepsOutPoint.where(contract_cell_id: cell_dep.contract_cell_id).exists?
 
       ckb_transaction = CkbTransaction.find(cell_dep.ckb_transaction_id)
 
-      cell_deps_out_points_attrs = Set.new
-      contract_attrs = Set.new
       type_script_hashes = Set.new
       lock_script_hashes = Set.new
 
@@ -25,7 +29,7 @@ class AnalyzeContractFromCellDependencyWorker
 
       case cell_dep.dep_type
       when "code"
-        cell_output = cell_dep.contract_cell
+        cell_output = cell_dep.cell_output
         cell_deps_out_points_attrs << {
           tx_hash: cell_output.tx_hash,
           cell_index: cell_output.cell_index,
@@ -50,7 +54,7 @@ class AnalyzeContractFromCellDependencyWorker
 
       when "dep_group"
         # when the type of cell_dep is "dep_group", it means the cell specified by the `out_point` is a list of out points to the actual referred contract cells
-        mid_cell = cell_dep.contract_cell
+        mid_cell = cell_dep.cell_output
 
         binary_data = mid_cell.binary_data
         # parse the actual list of out points from the data field of the cell
@@ -88,5 +92,6 @@ class AnalyzeContractFromCellDependencyWorker
     CellDepsOutPoint.upsert_all(cell_deps_out_points_attrs,
                                 unique_by: %i[contract_cell_id deployed_cell_output_id])
     Contract.upsert_all(contract_attrs, unique_by: %i[deployed_cell_output_id])
+    CellDependency.upsert_all(cell_deps_attrs, unique_by: %i[ckb_transaction_id contract_cell_id dep_type], update_only: :contract_analyzed)
   end
 end
