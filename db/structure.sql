@@ -1061,7 +1061,8 @@ CREATE TABLE public.cell_dependencies (
     contract_id bigint,
     implicit boolean,
     block_number bigint,
-    tx_index integer
+    tx_index integer,
+    contract_analyzed boolean DEFAULT false
 );
 
 
@@ -6427,6 +6428,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20241106062022'),
 ('20241114074433'),
 ('20241119014652'),
-('20241121073245');
+('20241121073245'),
+('20241125100650');
 
 
