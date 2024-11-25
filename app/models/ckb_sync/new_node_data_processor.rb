@@ -786,7 +786,7 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
 
     def build_cells_and_locks!(
       local_block, node_block, ckb_txs, inputs, outputs, tags, udt_address_ids,
-      dao_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes, token_transfer_ckb_tx_ids
+      dao_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes, token_transfer_ckb_tx_ids, cell_deps
     )
       cell_outputs_attributes = []
       cell_inputs_attributes = []
