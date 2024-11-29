@@ -5021,6 +5021,13 @@ CREATE INDEX index_cell_dependencies_on_block_number_and_tx_index ON public.cell
 
 
 --
+-- Name: index_cell_dependencies_on_contract_analyzed; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_cell_dependencies_on_contract_analyzed ON public.cell_dependencies USING btree (contract_analyzed);
+
+
+--
 <<<<<<< HEAD
 -- Name: index_cell_dependencies_on_tx_id_and_cell_id_and_dep_type; Type: INDEX; Schema: public; Owner: -
 --
