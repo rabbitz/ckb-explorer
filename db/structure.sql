@@ -5021,6 +5021,7 @@ CREATE INDEX index_cell_dependencies_on_block_number_and_tx_index ON public.cell
 
 
 --
+<<<<<<< HEAD
 -- Name: index_cell_dependencies_on_tx_id_and_cell_id_and_dep_type; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -5031,6 +5032,25 @@ CREATE UNIQUE INDEX index_cell_dependencies_on_tx_id_and_cell_id_and_dep_type ON
 -- Name: index_cell_deps_out_points_on_contract_cell_id_deployed_cell_id; Type: INDEX; Schema: public; Owner: -
 --
 
+=======
+-- Name: index_cell_dependencies_on_contract_analyzed; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_cell_dependencies_on_contract_analyzed ON public.cell_dependencies USING btree (contract_analyzed);
+
+
+--
+-- Name: index_cell_dependencies_on_tx_id_and_cell_id_and_dep_type; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_cell_dependencies_on_tx_id_and_cell_id_and_dep_type ON public.cell_dependencies USING btree (ckb_transaction_id, contract_cell_id, dep_type);
+
+
+--
+-- Name: index_cell_deps_out_points_on_contract_cell_id_deployed_cell_id; Type: INDEX; Schema: public; Owner: -
+--
+
+>>>>>>> refactor-contract
 CREATE UNIQUE INDEX index_cell_deps_out_points_on_contract_cell_id_deployed_cell_id ON public.cell_deps_out_points USING btree (contract_cell_id, deployed_cell_output_id);
 
 
@@ -6429,6 +6449,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20241114074433'),
 ('20241119014652'),
 ('20241121073245'),
-('20241125100650');
+('20241125100650'),
+('20241129000339');
 
 
