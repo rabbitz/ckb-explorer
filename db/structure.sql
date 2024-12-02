@@ -1573,7 +1573,8 @@ CREATE TABLE public.daily_statistics (
     nodes_count integer,
     locked_capacity numeric(30,0),
     ckb_hodl_wave jsonb,
-    holder_count integer
+    holder_count integer,
+    knowledge_size numeric(30,0)
 );
 
 
@@ -6459,4 +6460,5 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20241121073245'),
 ('20241125100650'),
 ('20241129000339'),
-('20241129032447');
+('20241129032447'),
+('20241202072604');
